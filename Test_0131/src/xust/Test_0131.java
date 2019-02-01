@@ -77,50 +77,46 @@ n = 8
 //    }
 //}
 /*
-3. 压缩字符串
-给定一组字符，使用原地算法将其压缩。
-压缩后的长度必须始终小于或等于原数组长度。
-数组的每个元素应该是长度为1 的字符（不是 int 整数类型）。
-在完成原地修改输入数组后，返回数组的新长度。
-进阶：
-你能否仅使用O(1) 空间解决问题？
+3. 回旋镖的数量
+给定平面上 n 对不同的点，“回旋镖” 是由点表示的元组 (i, j, k) ，其中 i 和 j 之间的距离和 i 和 k 之间的距离相等（需要考虑元组的顺序）。
+找到所有回旋镖的数量。你可以假设 n 最大为 500，所有点的坐标在闭区间 [-10000, 10000] 中。
 
-示例 1：
-输入：
-["a","a","b","b","c","c","c"]
-输出：
-返回6，输入数组的前6个字符应该是：["a","2","b","2","c","3"]
-说明：
-"aa"被"a2"替代。"bb"被"b2"替代。"ccc"被"c3"替代。
-
-示例 2：
-输入：
-["a"]
-输出：
-返回1，输入数组的前1个字符应该是：["a"]
-说明：
-没有任何字符串被替代。
-
-示例 3：
-输入：
-["a","b","b","b","b","b","b","b","b","b","b","b","b"]
-输出：
-返回4，输入数组的前4个字符应该是：["a","b","1","2"]。
-说明：
-由于字符"a"不重复，所以不会被压缩。"bbbbbbbbbbbb"被“b12”替代。
-注意每个数字在数组中都有它自己的位置。
-注意：
-所有字符都有一个ASCII值在[35, 126]区间内。
-1 <= len(chars) <= 1000。
+示例:
+输入:
+[[0,0],[1,0],[2,0]]
+输出:
+2
+解释:
+两个回旋镖为 [[1,0],[0,0],[2,0]] 和 [[1,0],[2,0],[0,0]]
  */
 //public class Test_0131 {
 //	public static void main(String[] args) {
 //		Solution So = new Solution();
+//		int[][] points ={{0,0},{1,0},{2,0}};
+//		System.out.println(So.numberOfBoomerangs(points));
 //	}
 //}
 //class Solution {
-//    public int compress(char[] chars) {
-//        
+//    public int numberOfBoomerangs(int[][] points) {
+//    	int sum = 0;
+//        for(int i=0; i<points.length; i++){
+//        	for(int j=0; j<points.length; j++){
+//        		if(j!=i){
+//        			int dj = (points[i][0] - points[j][0])*(points[i][0] - points[j][0]) +
+//            				(points[i][1] - points[j][1])*(points[i][1] - points[j][1]);
+//        			for(int k=0; k<points.length; k++){
+//        				if(k!=j && k !=i){
+//        					int dk = (points[i][0] - points[k][0])*(points[i][0] - points[k][0]) +
+//                    				(points[i][1] - points[k][1])*(points[i][1] - points[k][1]);
+//                			if(dj == dk){
+//                				sum++;
+//                			}
+//        				}
+//            		}
+//        		}
+//        	}
+//        }
+//        return sum;
 //    }
 //}
 /*
@@ -131,13 +127,46 @@ n = 8
 进阶:
 假设有 n 只水桶，猪饮水中毒后会在 m 分钟内死亡，你需要多少猪（x）就能在 p 分钟内找出“有毒”水桶？n只水桶里有且仅有一只有毒的桶。
  */
+/*
+ * 需要在一小时内测试出哪桶水有毒，而每头猪喝下毒药会在15分钟内死去，因此猪就有了五个时间状态，0min,15min,30min,45min,60min.
+ * 当测试用例buckets是1时，这桶水就是有毒的水，因此就是需要0头猪；
+ * 1头猪1个小时内可以测5桶水，每个状态下喝下一桶，若在某个时间点死去，则就是这桶水有毒。
+ * 先看一下2头猪可以测多少桶水呢？将每桶水按二维来编号，由于猪有5个状态，每行每列放5桶水 ：
+ *       猪2
+ *        |
+ *        V
+ *       40  41  42  43  44
+ *       30  31  32  33  34
+ *       20  21  22  23  24
+ *       10  11  12  13  14
+ * 猪1--> 00  01  02  03  04
+ *上述的两个箭头分别代表两个猪测试水的方向。
+ *猪1和猪2在0min分别喝第0行和第0列的水，如果两头猪都没事，接着按行按列往下喝，如果某个时间点猪1或猪2死去了，说明猪1或猪2喝的某行某列有水有毒
+ *猪1死去，猪2没死，猪1测出了哪行水有毒， 猪2需要在剩下的时间在每个时间点喝下此行剩下的水  ，直到死去，测出哪桶水有毒。猪2死去，猪1没死也是一样的。
+ *若猪1和猪2同时死去，那就是他们喝的行列交叉处的水有毒。
+ *分析完2头猪可以测25桶水，我们可以得只每个猪可以占一个维度来测试水，即3头猪可以测5^3=125桶水，4头猪可以测5^4=625桶水，5头猪可以测5^5=3125>1000桶水,因此需要5头猪就可以测出来。
+ *进阶：
+ *先算出有几个时间状态: minutesCount = p/m +1;
+ *x头猪各占一个维度：   当    minutesCount^x<n && minutesCount^x>=n时,x就是我们需要的小猪数.  
+ */
 public class Test_0131 {
 	public static void main(String[] args) {
 		Solution So = new Solution();
+		int buckets = 1000;
+		int minutesToDie = 15;
+		int minutesToTest = 60;
+		System.out.println(So.poorPigs(buckets, minutesToDie, minutesToTest));
 	}
 }
 class Solution {
     public int poorPigs(int buckets, int minutesToDie, int minutesToTest) {
-        
+        int minutesCount = minutesToTest/minutesToDie +1;
+        int poorPigs = 0;
+        int maxBuckets = 1;
+        while(maxBuckets < buckets){
+        	poorPigs++;
+        	maxBuckets *= minutesCount;
+        }
+        return poorPigs;
     }
 }
